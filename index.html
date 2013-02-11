@@ -1,0 +1,17 @@
+<html>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+        // Socket.io Initialization
+        var socket = io.connect();
+
+        function button(id,intensity) {
+          socket.emit('button',{id:id,intensity:intensity});
+          console.log('button ',{id:id,intensity:intensity});
+        };
+  </script>
+
+  <body>
+  <button onclick="button(5,100)">5 100</button>
+  <button onclick="button(5,200)">5 200</button>
+  </body>
+</html>
