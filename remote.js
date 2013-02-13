@@ -5,12 +5,13 @@ var file = new(static.Server)('.');
 // Connection handler
 var clientCount = 0;
 var tcpClients = [];
+
 function AddTcpClient(c) {
   c.uniqueId = clientCount;
   c.opStatus = 'active';
   clientCount++;
   tcpClients.push(c);
-  //console.log('AddTcpClients: ',tcpClients);
+  console.log('TCP client connected, assigned ID:',c.uniqueId);
 }
 
 function removeTcpClient(c) {
@@ -18,7 +19,7 @@ function removeTcpClient(c) {
     var client = tcpClients[i];
     if (client.uniqueId === c.uniqueId) {
       var removed = tcpClients.splice(i,1);
-      //console.log('removed client ',client.uniqueId);
+      console.log('Removing TCP client ID:',client.uniqueId);
     }
   }
 }
@@ -26,11 +27,12 @@ function removeTcpClient(c) {
 // HTTP static files.
 var httpPort = 1337;
 var serv = http.createServer(function (req, res) {
-    console.log('A Connection!');
+    console.log('Processing a HTTP request',req.method,req.url);
     req.addListener('end', function () {
     // Serve files!
         file.serve(req, res);
     });
+    console.log('Returning a HTTP response',res.statusCode);
 }).listen(httpPort);
 console.log('HTTP Server on ',httpPort);
 
@@ -39,10 +41,10 @@ var io = require('socket.io').listen(serv);
 console.log('socket.io running`');
 io.sockets.on('connection', function(socket) {
   socket.on('button',function(data) {
-    console.log('button',data);
+    console.log('socket.io event: button',data);
     for (socket in tcpClients) {
-      console.log('socket ',socket);
-      console.log('data',data);
+      var id = tcpClients[socket].uniqueId;
+      console.log('Writing data to TCP client ID:',id,' data:',data);
       tcpClients[socket].write(JSON.stringify(data));
     }
   });
@@ -52,9 +54,8 @@ io.sockets.on('connection', function(socket) {
 var net = require('net'),
   tcpPort = 8124;
 var server = net.createServer(function(c) { //'connection' listener
-  console.log('client connected');
   c.on('end', function() {
-    console.log('client disconnected',c.uniqueId);
+    console.log('TCP client ID:',c.uniqueId,'disconnected');
     removeTcpClient(c);
   });
   AddTcpClient(c);
